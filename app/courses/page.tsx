@@ -1,27 +1,30 @@
 import Link from "next/link"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/utils/supabase/server"
+import { ImageWithFallback } from "@/components/ImageWithFallback"
 
 export const dynamic = "force-dynamic"
 
-async function getCourses(level?: string) {
+interface Course {
+  id: string
+  title: string
+  description: string
+  image_url?: string
+  level: string
+  duration_weeks: number
+  price: number
+}
+
+async function getCourses(level?: string): Promise<Course[]> {
   try {
     const supabase = await createClient()
-
-    let query =  supabase.from("courses").select("*")
-
-    if (level) {
-      query = query.eq("level", level)
-    }
-
+    let query = supabase.from("courses").select("*")
+    if (level) query = query.eq("level", level)
     const { data, error } = await query.order("level")
-
     if (error) {
       console.error("Error fetching courses:", error)
       return []
     }
-
     return data || []
   } catch (error) {
     console.error("Error in getCourses:", error)
@@ -29,17 +32,9 @@ async function getCourses(level?: string) {
   }
 }
 
-export default async function CoursesPage({ searchParams }: { searchParams: { level?: string } }) {
-  let courses: any[] = []
-
-  try {
-    const level = searchParams.level
-    courses = await getCourses(level)
-  } catch (error) {
-    console.error("Error rendering courses page:", error)
-    // Continue with empty courses array
-  }
-
+export default async function CoursesPage({ searchParams }: { searchParams: URLSearchParams }) {
+  const level = searchParams.get("level") ?? undefined
+  const courses = await getCourses(level)
   const levels = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
   return (
@@ -54,11 +49,11 @@ export default async function CoursesPage({ searchParams }: { searchParams: { le
       {/* Level Filter */}
       <div className="flex flex-wrap justify-center gap-2 mb-8">
         <Link href="/courses">
-          <Button variant={!searchParams.level ? "default" : "outline"}>All Levels</Button>
+          <Button variant={!level ? "default" : "outline"}>All Levels</Button>
         </Link>
         {levels.map((l) => (
           <Link key={l} href={`/courses?level=${l}`}>
-            <Button variant={searchParams.level === l ? "default" : "outline"}>{l}</Button>
+            <Button variant={level === l ? "default" : "outline"}>{l}</Button>
           </Link>
         ))}
       </div>
@@ -66,21 +61,16 @@ export default async function CoursesPage({ searchParams }: { searchParams: { le
       {/* Courses Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {courses.length > 0 ? (
-          courses.map((course) => (
+          courses.map((course: Course) => (
             <div key={course.id} className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden">
               <div className="h-48 relative">
-                <Image
+                <ImageWithFallback
                   src={
-                    course.image_url || `/placeholder.svg?height=200&width=400&text=${encodeURIComponent(course.title)}`
+                    course.image_url ||
+                    `/placeholder.svg?height=200&width=400&text=${encodeURIComponent(course.title)}`
                   }
                   alt={course.title}
-                  fill
-                  className="object-cover"
-                  onError={(e) => {
-                    // If the image fails to load, replace with a default placeholder
-                    const target = e.target as HTMLImageElement
-                    target.src = `/placeholder.svg?height=200&width=400&text=${encodeURIComponent(course.title)}`
-                  }}
+                  title={course.title}
                 />
               </div>
               <div className="p-6">
@@ -104,8 +94,8 @@ export default async function CoursesPage({ searchParams }: { searchParams: { le
         ) : (
           <div className="col-span-3 text-center py-12">
             <p className="text-gray-600 dark:text-gray-400">
-              {searchParams.level
-                ? `No courses available for level ${searchParams.level} at the moment.`
+              {level
+                ? `No courses available for level ${level} at the moment.`
                 : "No courses available at the moment."}
             </p>
           </div>
@@ -114,4 +104,3 @@ export default async function CoursesPage({ searchParams }: { searchParams: { le
     </div>
   )
 }
-
