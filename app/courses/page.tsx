@@ -32,8 +32,12 @@ async function getCourses(level?: string): Promise<Course[]> {
   }
 }
 
-export default async function CoursesPage({ searchParams }: { searchParams: URLSearchParams }) {
-  const level = searchParams.get("level") ?? undefined
+export default async function CoursesPage({
+  searchParams,
+}: {
+  searchParams: Record<string, string | string[] | undefined>
+}) {
+  const level = typeof searchParams.level === "string" ? searchParams.level : undefined
   const courses = await getCourses(level)
   const levels = ["A1", "A2", "B1", "B2", "C1", "C2"]
 
