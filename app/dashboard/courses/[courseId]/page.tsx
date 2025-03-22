@@ -8,7 +8,7 @@ import { CourseMaterialsList } from "@/components/course-materials-list"
 export const dynamic = "force-dynamic"
 
 async function getCourse(id: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data, error } = await supabase.from("courses").select("*").eq("id", id).single()
 
   if (error) {
@@ -20,7 +20,7 @@ async function getCourse(id: string) {
 }
 
 async function getLessons(courseId: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data, error } = await supabase.from("lessons").select("*").eq("course_id", courseId).order("order_number")
 
   if (error) {
@@ -32,7 +32,7 @@ async function getLessons(courseId: string) {
 }
 
 async function checkEnrollment(courseId: string, userId: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data, error } = await supabase
     .from("enrollments")
     .select("*")
@@ -48,7 +48,7 @@ async function checkEnrollment(courseId: string, userId: string) {
 }
 
 async function getLessonProgress(courseId: string, userId: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data: lessons } = await supabase.from("lessons").select("id").eq("course_id", courseId)
 
   if (!lessons || lessons.length === 0) {
@@ -73,7 +73,7 @@ async function getLessonProgress(courseId: string, userId: string) {
 }
 
 async function isInstructor(userId: string) {
-  const supabase = createClient()
+  const supabase = await createClient()
   const { data, error } = await supabase.from("profiles").select("role").eq("id", userId).single()
 
   if (error) {
@@ -85,7 +85,7 @@ async function isInstructor(userId: string) {
 }
 
 export default async function CourseDashboardPage({ params }: { params: { courseId: string } }) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const {
     data: { user },
