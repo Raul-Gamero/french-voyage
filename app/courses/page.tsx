@@ -16,26 +16,22 @@ interface Course {
 }
 
 async function getCourses(level?: string): Promise<Course[]> {
-  try {
-    const supabase = await createClient()
-    let query = supabase.from("courses").select("*")
-    if (level) query = query.eq("level", level)
-    const { data, error } = await query.order("level")
-    if (error) {
-      console.error("Error fetching courses:", error)
-      return []
-    }
-    return data || []
-  } catch (error) {
-    console.error("Error in getCourses:", error)
+  const supabase = await createClient()
+  let query = supabase.from("courses").select("*")
+  if (level) query = query.eq("level", level)
+  const { data, error } = await query.order("level")
+  if (error) {
+    console.error("Error fetching courses:", error)
     return []
   }
+  return data || []
 }
 
+// ✅ aquí usamos searchParams correctamente como prop de Next.js App Router
 export default async function CoursesPage({
   searchParams,
 }: {
-  searchParams: Record<string, string | string[] | undefined>
+  searchParams: { level?: string }
 }) {
   const level = typeof searchParams.level === "string" ? searchParams.level : undefined
   const courses = await getCourses(level)
@@ -65,7 +61,7 @@ export default async function CoursesPage({
       {/* Courses Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {courses.length > 0 ? (
-          courses.map((course: Course) => (
+          courses.map((course) => (
             <div key={course.id} className="bg-white dark:bg-gray-900 rounded-lg shadow-md overflow-hidden">
               <div className="h-48 relative">
                 <ImageWithFallback

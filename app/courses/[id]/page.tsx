@@ -3,12 +3,11 @@ import Image from "next/image"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { createClient } from "@/utils/supabase/server"
-
 export const dynamic = "force-dynamic"
 
 async function getCourse(id: string) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const { data, error } = await supabase.from("courses").select("*").eq("id", id).single()
 
@@ -26,7 +25,8 @@ async function getCourse(id: string) {
 
 export default async function CourseDetailPage({ params }: { params: { id: string } }) {
   try {
-    const course = await getCourse(params.id)
+    const id = typeof params.id === "string" ? params.id : ""
+    const course = await getCourse(id)
 
     if (!course) {
       notFound()
