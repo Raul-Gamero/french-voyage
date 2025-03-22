@@ -2,11 +2,10 @@ import { createServerClient } from "@supabase/ssr"
 import { cookies } from "next/headers"
 import type { Database } from "@/types/supabase"
 
-export function createClient() {
+export async function createClient() {
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
 
-    // Check for environment variables
     const supabaseUrl = process.env.SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_ANON_KEY
 
@@ -47,7 +46,6 @@ export function createClient() {
   }
 }
 
-// Create a mock client for SSR to prevent crashes
 function createMockClient() {
   return {
     from: () => ({
@@ -68,4 +66,3 @@ function createMockClient() {
     },
   } as any
 }
-

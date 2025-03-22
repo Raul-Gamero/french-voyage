@@ -7,9 +7,9 @@ export const dynamic = "force-dynamic"
 
 async function getCourses(level?: string) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
 
-    let query = supabase.from("courses").select("*")
+    let query =  supabase.from("courses").select("*")
 
     if (level) {
       query = query.eq("level", level)

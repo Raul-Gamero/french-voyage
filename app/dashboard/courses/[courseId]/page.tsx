@@ -9,7 +9,6 @@ export const dynamic = "force-dynamic"
 
 async function getCourse(id: string) {
   const supabase = createClient()
-
   const { data, error } = await supabase.from("courses").select("*").eq("id", id).single()
 
   if (error) {
@@ -22,7 +21,6 @@ async function getCourse(id: string) {
 
 async function getLessons(courseId: string) {
   const supabase = createClient()
-
   const { data, error } = await supabase.from("lessons").select("*").eq("course_id", courseId).order("order_number")
 
   if (error) {
@@ -35,7 +33,6 @@ async function getLessons(courseId: string) {
 
 async function checkEnrollment(courseId: string, userId: string) {
   const supabase = createClient()
-
   const { data, error } = await supabase
     .from("enrollments")
     .select("*")
@@ -52,7 +49,6 @@ async function checkEnrollment(courseId: string, userId: string) {
 
 async function getLessonProgress(courseId: string, userId: string) {
   const supabase = createClient()
-
   const { data: lessons } = await supabase.from("lessons").select("id").eq("course_id", courseId)
 
   if (!lessons || lessons.length === 0) {
@@ -78,7 +74,6 @@ async function getLessonProgress(courseId: string, userId: string) {
 
 async function isInstructor(userId: string) {
   const supabase = createClient()
-
   const { data, error } = await supabase.from("profiles").select("role").eq("id", userId).single()
 
   if (error) {
@@ -91,15 +86,16 @@ async function isInstructor(userId: string) {
 
 export default async function CourseDashboardPage({ params }: { params: { courseId: string } }) {
   const supabase = createClient()
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
 
-  if (!session) {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
     redirect("/login")
   }
 
-  const isEnrolled = await checkEnrollment(params.courseId, session.user.id)
+  const isEnrolled = await checkEnrollment(params.courseId, user.id)
 
   if (!isEnrolled) {
     redirect(`/courses/${params.courseId}`)
@@ -112,9 +108,9 @@ export default async function CourseDashboardPage({ params }: { params: { course
   }
 
   const lessons = await getLessons(params.courseId)
-  const progress = await getLessonProgress(params.courseId, session.user.id)
+  const progress = await getLessonProgress(params.courseId, user.id)
   const progressPercentage = progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0
-  const userIsInstructor = await isInstructor(session.user.id)
+  const userIsInstructor = await isInstructor(user.id)
 
   return (
     <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -183,4 +179,3 @@ export default async function CourseDashboardPage({ params }: { params: { course
     </div>
   )
 }
-

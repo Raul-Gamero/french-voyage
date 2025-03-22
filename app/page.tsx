@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic"
 
 async function getFeaturedCourses() {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data, error } = await supabase.from("courses").select("*").eq("is_featured", true).limit(3)
 
     if (error) {
