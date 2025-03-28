@@ -29,7 +29,9 @@ export default async function DashboardPage() {
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <p className="text-gray-600 dark:text-gray-400">
-            Your dashboard is being simplified while we resolve some technical issues. Please check back soon for full functionality.
+          This is your personal space at French Voyage Akademie, where you can access your courses, 
+          track your progress, and continue your journey to French fluency. We're happy to have you here! 
+          Explore, learn, and grow with us.
           </p>
         </div>
       </div>
