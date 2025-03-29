@@ -105,8 +105,8 @@ export default function Register() {
     <div className="flex items-center justify-center min-h-[calc(100vh-16rem)] py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Create an account</CardTitle>
-          <CardDescription>Enter your information to create an account</CardDescription>
+          <CardTitle className="text-2xl font-bold">Confirm your account</CardTitle>
+          <CardDescription>Enter your information to create your profile</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
