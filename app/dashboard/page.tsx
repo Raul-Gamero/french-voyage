@@ -49,7 +49,7 @@ export default async function DashboardPage() {
               Confirm Profile
             </a>
             <a
-              href="/update-profile"
+              href="/profileupdate"
               className="w-full text-center bg-yellow-500 text-white py-2 px-4 rounded-lg hover:bg-yellow-600"
             >
               Update Profile
