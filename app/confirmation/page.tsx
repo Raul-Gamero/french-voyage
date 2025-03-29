@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -24,14 +23,14 @@ export default function ConfirmProfile() {
   useEffect(() => {
     const fetchUserData = async () => {
       const supabase = createClient()
-      const { data: user, error: userError } = await supabase.auth.getUser()
+      const { data, error: userError } = await supabase.auth.getUser()
 
-      if (userError || !user) {
+      if (userError || !data?.user) {
         setError("Unable to fetch user data. Please log in.")
         return
       }
 
-      setEmail(user.email || "")
+      setEmail(data.user.email || "")
     }
 
     fetchUserData()
@@ -44,17 +43,19 @@ export default function ConfirmProfile() {
 
     try {
       const supabase = createClient()
-      const { data: user, error: userError } = await supabase.auth.getUser()
+      const { data, error: userError } = await supabase.auth.getUser()
 
-      if (userError || !user) {
+      if (userError || !data?.user) {
         throw new Error("Unable to fetch user data. Please log in.")
       }
 
+      const { user } = data
+
       const { error: profileError } = await supabase.from("profiles").upsert({
-        id: user.id,
+        id: user.id, // This is the UUID linked to auth.users
         first_name: firstName,
         last_name: lastName,
-        email: email,
+        email: user.email,
         avatar_url: avatarUrl,
         bio: bio,
         role: "student",
@@ -68,7 +69,6 @@ export default function ConfirmProfile() {
 
       setSuccess(true)
 
-      // Redirect after a short delay
       setTimeout(() => {
         router.push("/dashboard")
       }, 2000)
@@ -166,4 +166,3 @@ export default function ConfirmProfile() {
     </div>
   )
 }
-
