@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
-import Link from "next/link"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
 import { Button } from "@/components/ui/button"
@@ -10,92 +9,72 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { InfoIcon } from "lucide-react"
 
-export default function Register() {
+export default function ConfirmProfile() {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [avatarUrl, setAvatarUrl] = useState("")
+  const [bio, setBio] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const router = useRouter()
-  const [showDebugInfo, setShowDebugInfo] = useState(false)
-  const [debugInfo, setDebugInfo] = useState<any>(null)
 
-  const handleRegister = async (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchUserData = async () => {
+      const supabase = createClient()
+      const { data: user, error: userError } = await supabase.auth.getUser()
+
+      if (userError || !user) {
+        setError("Unable to fetch user data. Please log in.")
+        return
+      }
+
+      setEmail(user.email || "")
+    }
+
+    fetchUserData()
+  }, [])
+
+  const handleConfirmProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
-    setDebugInfo(null)
 
     try {
       const supabase = createClient()
+      const { data: user, error: userError } = await supabase.auth.getUser()
 
-      // Log the registration attempt for debugging
-      console.log("Attempting registration with email:", email)
+      if (userError || !user) {
+        throw new Error("Unable to fetch user data. Please log in.")
+      }
 
-      // Register the user with Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-          },
-        },
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: user.id,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        avatar_url: avatarUrl,
+        bio: bio,
+        role: "student",
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
       })
 
-      if (authError) {
-        console.error("Registration auth error:", authError)
-        setDebugInfo({ authError: authError.message, code: authError.code })
-        throw authError
-      }
-
-      if (!authData.user) {
-        throw new Error("No user returned from registration")
-      }
-
-      // Create a profile record in the profiles table
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: authData.user.id,
-          first_name: firstName,
-          last_name: lastName,
-          email: email,
-          role: "student",
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        },
-      ])
-
       if (profileError) {
-        console.error("Profile creation error:", profileError)
-        setDebugInfo((prev: any) => ({ ...prev, profileError: profileError.message, code: profileError.code }))
-        // Continue anyway - the auth trigger might handle this
+        throw profileError
       }
 
-      // Show success message
       setSuccess(true)
-      setDebugInfo((prev: any) => ({ ...prev, success: true, user: authData.user.id }))
 
-      // Redirect after a short delay to allow the user to see the success message
+      // Redirect after a short delay
       setTimeout(() => {
-        router.push("/login?registered=true")
+        router.push("/dashboard")
       }, 2000)
     } catch (error: any) {
-      console.error("Registration error:", error)
-
-      // Provide more specific error messages based on the error
-      if (error.message?.includes("already registered")) {
-        setError("This email is already registered. Please log in instead.")
-      } else if (error.message?.includes("password")) {
-        setError("Password error: " + error.message)
-      } else {
-        setError(error.message || "An error occurred during registration")
-      }
+      console.error("Profile confirmation error:", error)
+      setError(error.message || "An error occurred while confirming your profile.")
     } finally {
       setLoading(false)
     }
@@ -105,8 +84,8 @@ export default function Register() {
     <div className="flex items-center justify-center min-h-[calc(100vh-16rem)] py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Confirm your account</CardTitle>
-          <CardDescription>Enter your information to create your profile</CardDescription>
+          <CardTitle className="text-2xl font-bold">Confirm your profile</CardTitle>
+          <CardDescription>Update your information to complete your profile</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -116,10 +95,10 @@ export default function Register() {
           )}
           {success && (
             <Alert className="mb-4 bg-green-50 text-green-800 border-green-200">
-              <AlertDescription>Registration successful! Redirecting to login...</AlertDescription>
+              <AlertDescription>Profile updated successfully! Redirecting...</AlertDescription>
             </Alert>
           )}
-          <form onSubmit={handleRegister} className="space-y-4">
+          <form onSubmit={handleConfirmProfile} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
@@ -147,54 +126,40 @@ export default function Register() {
               <Input
                 id="email"
                 type="email"
-                placeholder="your.email@example.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+                readOnly
+                className="bg-gray-100 cursor-not-allowed"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="avatarUrl">Avatar URL</Label>
               <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={6}
+                id="avatarUrl"
+                placeholder="https://example.com/avatar.jpg"
+                value={avatarUrl}
+                onChange={(e) => setAvatarUrl(e.target.value)}
               />
-              <p className="text-xs text-gray-500">Password must be at least 6 characters long</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Input
+                id="bio"
+                placeholder="Tell us about yourself"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+              />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Register"}
+              {loading ? "Saving..." : "Confirm Profile"}
             </Button>
           </form>
-
-          {/* Debug information toggle */}
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={() => setShowDebugInfo(!showDebugInfo)}
-              className="text-xs text-gray-500 flex items-center"
-            >
-              <InfoIcon className="h-3 w-3 mr-1" />
-              {showDebugInfo ? "Hide debug info" : "Show debug info"}
-            </button>
-
-            {showDebugInfo && debugInfo && (
-              <pre className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded text-xs overflow-auto">
-                {JSON.stringify(debugInfo, null, 2)}
-              </pre>
-            )}
-          </div>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-center">
-            Already have an account?{" "}
-            <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
-              Login
-            </Link>
+            Want to log out?{" "}
+            <a href="/logout" className="font-medium text-blue-600 hover:text-blue-500">
+              Logout
+            </a>
           </div>
         </CardFooter>
       </Card>
