@@ -61,7 +61,7 @@ export default async function DashboardPage() {
               Delete Profile
             </a>
             <a
-              href="/see-profile"
+              href="/profileread"
               className="w-full text-center bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700"
             >
               See Profile
