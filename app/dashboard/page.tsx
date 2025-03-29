@@ -26,8 +26,8 @@ export default async function DashboardPage() {
         </h1>
 
         <p className="text-gray-600 dark:text-gray-400 mb-6">Email: {user.email}</p>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">Email: {user.first_name}</p>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">Email: {user.last_name}</p>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">First Name: {user.first_name}</p>
+        <p className="text-gray-600 dark:text-gray-400 mb-6">Last Name: {user.last_name}</p>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <p className="text-gray-600 dark:text-gray-400">
