@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-export default function ConfirmProfile() {
+export default function UpdateProfile() {
   const [firstName, setFirstName] = useState("")
   const [lastName, setLastName] = useState("")
   const [email, setEmail] = useState("")
@@ -23,45 +23,57 @@ export default function ConfirmProfile() {
   useEffect(() => {
     const fetchUserData = async () => {
       const supabase = createClient()
-      const { data, error: userError } = await supabase.auth.getUser()
+      const { data: user, error: userError } = await supabase.auth.getUser()
 
-      if (userError || !data?.user) {
+      if (userError || !user) {
         setError("Unable to fetch user data. Please log in.")
         return
       }
 
-      setEmail(data.user.email || "")
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("first_name, last_name, email, avatar_url, bio")
+        .eq("id", user.id)
+        .single()
+
+      if (profileError) {
+        setError("Unable to fetch profile data.")
+        return
+      }
+
+      setFirstName(profile.first_name || "")
+      setLastName(profile.last_name || "")
+      setEmail(profile.email || "")
+      setAvatarUrl(profile.avatar_url || "")
+      setBio(profile.bio || "")
     }
 
     fetchUserData()
   }, [])
 
-  const handleConfirmProfile = async (e: React.FormEvent) => {
+  const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
     try {
       const supabase = createClient()
-      const { data, error: userError } = await supabase.auth.getUser()
+      const { data: user, error: userError } = await supabase.auth.getUser()
 
-      if (userError || !data?.user) {
+      if (userError || !user) {
         throw new Error("Unable to fetch user data. Please log in.")
       }
 
-      const { user } = data
-
-      const { error: profileError } = await supabase.from("profiles").upsert({
-        id: user.id, // This is the UUID linked to auth.users
-        first_name: firstName,
-        last_name: lastName,
-        email: user.email,
-        avatar_url: avatarUrl,
-        bio: bio,
-        role: "student",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .update({
+          first_name: firstName,
+          last_name: lastName,
+          avatar_url: avatarUrl,
+          bio: bio,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", user.id)
 
       if (profileError) {
         throw profileError
@@ -69,12 +81,13 @@ export default function ConfirmProfile() {
 
       setSuccess(true)
 
+      // Redirect after a short delay
       setTimeout(() => {
         router.push("/dashboard")
       }, 2000)
     } catch (error: any) {
-      console.error("Profile confirmation error:", error)
-      setError(error.message || "An error occurred while confirming your profile.")
+      console.error("Profile update error:", error)
+      setError(error.message || "An error occurred while updating your profile.")
     } finally {
       setLoading(false)
     }
@@ -84,8 +97,8 @@ export default function ConfirmProfile() {
     <div className="flex items-center justify-center min-h-[calc(100vh-16rem)] py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Confirm your profile</CardTitle>
-          <CardDescription>Update your information to complete your profile</CardDescription>
+          <CardTitle className="text-2xl font-bold">Update your profile</CardTitle>
+          <CardDescription>Modify your information to keep your profile up to date</CardDescription>
         </CardHeader>
         <CardContent>
           {error && (
@@ -98,7 +111,7 @@ export default function ConfirmProfile() {
               <AlertDescription>Profile updated successfully! Redirecting...</AlertDescription>
             </Alert>
           )}
-          <form onSubmit={handleConfirmProfile} className="space-y-4">
+          <form onSubmit={handleUpdateProfile} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
@@ -150,7 +163,7 @@ export default function ConfirmProfile() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Saving..." : "Confirm Profile"}
+              {loading ? "Saving..." : "Update Profile"}
             </Button>
           </form>
         </CardContent>
