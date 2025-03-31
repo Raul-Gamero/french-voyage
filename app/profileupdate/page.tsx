@@ -23,24 +23,19 @@ export default function UpdateProfile() {
   useEffect(() => {
     const fetchUserData = async () => {
       const supabase = createClient()
-      const { data: user, error: userError } = await supabase.auth.getUser()
+      const { data, error: userError } = await supabase.auth.getUser()
 
-      if (userError || !user) {
+      if (userError || !data?.user) {
         setError("Unable to fetch user data. Please log in.")
         return
       }
 
-      console.log("Fetched user:", user) // Debugging user object
-
-      if (!user.id) {
-        setError("User ID is undefined. Please log in again.")
-        return
-      }
+      const userId = data.user.id
 
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("first_name, last_name, email, avatar_url, bio")
-        .eq("id", user.id)
+        .eq("id", userId)
         .single()
 
       if (profileError) {
@@ -65,15 +60,13 @@ export default function UpdateProfile() {
 
     try {
       const supabase = createClient()
-      const { data: user, error: userError } = await supabase.auth.getUser()
+      const { data, error: userError } = await supabase.auth.getUser()
 
-      if (userError || !user) {
+      if (userError || !data?.user) {
         throw new Error("Unable to fetch user data. Please log in.")
       }
 
-      if (!user.id) {
-        throw new Error("User ID is undefined. Please log in again.")
-      }
+      const userId = data.user.id
 
       const { error: profileError } = await supabase
         .from("profiles")
@@ -84,7 +77,7 @@ export default function UpdateProfile() {
           bio: bio,
           updated_at: new Date().toISOString(),
         })
-        .eq("id", user.id)
+        .eq("id", userId)
 
       if (profileError) {
         throw profileError
@@ -92,7 +85,6 @@ export default function UpdateProfile() {
 
       setSuccess(true)
 
-      // Redirect after a short delay
       setTimeout(() => {
         router.push("/dashboard")
       }, 2000)
