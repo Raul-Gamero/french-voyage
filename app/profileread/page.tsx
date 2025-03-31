@@ -16,17 +16,19 @@ export default function ViewProfile() {
   useEffect(() => {
     const fetchUserData = async () => {
       const supabase = createClient()
-      const { data: user, error: userError } = await supabase.auth.getUser()
+      const { data, error: userError } = await supabase.auth.getUser()
 
-      if (userError || !user) {
+      if (userError || !data?.user) {
         setError("Unable to fetch user data. Please log in.")
         return
       }
 
+      const userId = data.user.id
+
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("first_name, last_name, email, avatar_url, bio")
-        .eq("id", user.id)
+        .eq("id", userId)
         .single()
 
       if (profileError) {
@@ -69,7 +71,8 @@ export default function ViewProfile() {
                 <strong>Email:</strong> {email}
               </div>
               <div>
-                <strong>Avatar URL:</strong> {avatarUrl ? (
+                <strong>Avatar URL:</strong>{" "}
+                {avatarUrl ? (
                   <a href={avatarUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                     View Avatar
                   </a>
