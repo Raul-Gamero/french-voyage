@@ -55,7 +55,7 @@ export default async function DashboardPage() {
               Update Profile
             </a>
             <a
-              href="/delete-profile"
+              href="/profiledelete"
               className="w-full text-center bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700"
             >
               Delete Profile
