@@ -1,6 +1,7 @@
 import { createClient } from "@/utils/supabase/server"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 
 export const dynamic = "force-dynamic"
 
@@ -34,7 +35,7 @@ export default async function AdminPage() {
   }
 
   // Function to delete a user profile
-  const handleDeleteProfile = async (profileId) => {
+  const handleDeleteProfile = async (profileId: string) => {
     try {
       const { error: deleteError } = await supabase
         .from("profiles")
@@ -62,7 +63,7 @@ export default async function AdminPage() {
         {profiles.length === 0 ? (
           <p className="text-gray-600 dark:text-gray-400">No profiles found.</p>
         ) : (
-          profiles.map((profile) => (
+          profiles.map((profile: { id: string; first_name: string; last_name: string; email: string; role: string }) => (
             <div
               key={profile.id}
               className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6"
