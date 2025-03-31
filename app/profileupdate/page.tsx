@@ -30,6 +30,13 @@ export default function UpdateProfile() {
         return
       }
 
+      console.log("Fetched user:", user) // Debugging user object
+
+      if (!user.id) {
+        setError("User ID is undefined. Please log in again.")
+        return
+      }
+
       const { data: profile, error: profileError } = await supabase
         .from("profiles")
         .select("first_name, last_name, email, avatar_url, bio")
@@ -62,6 +69,10 @@ export default function UpdateProfile() {
 
       if (userError || !user) {
         throw new Error("Unable to fetch user data. Please log in.")
+      }
+
+      if (!user.id) {
+        throw new Error("User ID is undefined. Please log in again.")
       }
 
       const { error: profileError } = await supabase
