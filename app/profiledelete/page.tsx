@@ -6,18 +6,16 @@ import { createClient } from "@/utils/supabase/client"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 
 export default function DeleteProfile() {
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [open, setOpen] = useState(false)
   const router = useRouter()
 
   const handleDeleteProfile = async () => {
-    const confirm = window.confirm("Are you sure you want to delete your profile? This action cannot be undone.")
-
-    if (!confirm) return
-
     setLoading(true)
     setError(null)
 
@@ -45,14 +43,15 @@ export default function DeleteProfile() {
       await supabase.auth.signOut()
 
       setSuccess(true)
+      setOpen(false)
 
-      // Redirect to login after short delay
       setTimeout(() => {
         router.push("/login")
       }, 2000)
     } catch (error: any) {
       console.error("Profile delete error:", error)
       setError(error.message || "An error occurred while deleting your profile.")
+      setOpen(false)
     } finally {
       setLoading(false)
     }
@@ -77,14 +76,43 @@ export default function DeleteProfile() {
             </Alert>
           )}
           {!success && (
-            <Button
-              onClick={handleDeleteProfile}
-              variant="destructive"
-              className="w-full"
-              disabled={loading}
-            >
-              {loading ? "Deleting..." : "Delete Profile"}
-            </Button>
+            <>
+              <Button
+                onClick={() => setOpen(true)}
+                variant="destructive"
+                className="w-full"
+                disabled={loading}
+              >
+                Delete Profile
+              </Button>
+
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Are you sure?</DialogTitle>
+                    <DialogDescription>
+                      This action cannot be undone. Your profile will be permanently deleted.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <DialogFooter className="flex gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setOpen(false)}
+                      disabled={loading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      onClick={handleDeleteProfile}
+                      disabled={loading}
+                    >
+                      {loading ? "Deleting..." : "Yes, delete"}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </>
           )}
         </CardContent>
         <CardFooter>
