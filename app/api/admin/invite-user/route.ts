@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createClient } from "@/utils/supabase/server"
+import { createAdminClient } from "@/utils/supabase/server"
 
 export async function POST(req: Request) {
   try {
@@ -10,9 +10,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: "Email is required" }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    const supabase = createAdminClient()
 
-    const { data, error } = await supabase.auth.admin.inviteUserByEmail(email)
+    const { error } = await supabase.auth.admin.inviteUserByEmail(email)
 
     if (error) {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 })
