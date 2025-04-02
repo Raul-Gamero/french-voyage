@@ -7,6 +7,7 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
   const [formData, setFormData] = useState<any>({})
   const [allProfiles, setAllProfiles] = useState(profiles)
   const [loading, setLoading] = useState(false)
+  const [showBioId, setShowBioId] = useState<string | null>(null) // NEW STATE
 
   const handleEdit = (profile: any) => {
     setEditingId(profile.id)
@@ -76,6 +77,10 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
     alert("✅ Profile deleted successfully!")
   }
 
+  const toggleBio = (id: string) => {
+    setShowBioId((prev) => (prev === id ? null : id))
+  }
+
   return (
     <div className="space-y-4">
       {allProfiles.map((profile) => (
@@ -140,7 +145,19 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
                 >
                   Delete
                 </button>
+                <button
+                  onClick={() => toggleBio(profile.id)}
+                  className="bg-blue-600 text-white py-1 px-3 rounded"
+                >
+                  {showBioId === profile.id ? "Hide Bio" : "View Bio"}
+                </button>
               </div>
+
+              {showBioId === profile.id && (
+                <p className="mt-2 text-gray-600 dark:text-gray-400">
+                  <strong>Bio:</strong> {profile.bio || "No bio available."}
+                </p>
+              )}
             </>
           )}
         </div>
