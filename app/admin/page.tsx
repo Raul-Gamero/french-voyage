@@ -44,6 +44,25 @@ export default async function AdminPage() {
         <p className="text-gray-600 dark:text-gray-400 mb-6">You are logged in as Admin</p>
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+        <h2 className="text-xl font-bold mb-4">Invite New User</h2>
+        <form action="/api/admin/invite-user" method="POST" className="flex gap-4">
+          <input
+          type="email"
+          name="email"
+          placeholder="Enter email"
+          required
+          className="border rounded px-3 py-2 w-full"
+           />
+          <button
+          type="submit"
+          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          >
+          Send Invitation
+          </button>
+        </form>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
           <h2 className="text-xl font-bold mb-4">All User Profiles</h2>
           {profiles?.length ? (
             <AdminPageClient profiles={profiles} />
