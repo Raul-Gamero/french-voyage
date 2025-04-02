@@ -1,14 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { createClient } from "@/utils/supabase/client"
 
 export default function AdminPageClient({ profiles }: { profiles: any[] }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState<any>({})
   const [allProfiles, setAllProfiles] = useState(profiles)
   const [loading, setLoading] = useState(false)
-  const supabase = createClient()
 
   const handleEdit = (profile: any) => {
     setEditingId(profile.id)
@@ -25,17 +23,21 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
 
   const handleSave = async (id: string) => {
     setLoading(true)
-    const { error } = await supabase
-      .from("profiles")
-      .update({
+    const res = await fetch("/api/admin/update-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        id,
         first_name: formData.first_name,
         last_name: formData.last_name,
         role: formData.role,
-      })
-      .eq("id", id)
+      }),
+    })
 
-    if (error) {
-      alert("❌ Error updating profile: " + error.message)
+    const data = await res.json()
+
+    if (!data.success) {
+      alert("❌ Error updating profile: " + data.error)
       setLoading(false)
       return
     }
@@ -54,10 +56,16 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
     if (!confirmDelete) return
 
     setLoading(true)
-    const { error } = await supabase.from("profiles").delete().eq("id", id)
+    const res = await fetch("/api/admin/delete-profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    })
 
-    if (error) {
-      alert("❌ Error deleting profile: " + error.message)
+    const data = await res.json()
+
+    if (!data.success) {
+      alert("❌ Error deleting profile: " + data.error)
       setLoading(false)
       return
     }
