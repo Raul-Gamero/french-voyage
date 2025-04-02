@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: false, error: error.message }, { status: 400 })
     }
 
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_SITE_URL}/admin`)
+    return NextResponse.redirect("https://frenchonlineacademy.com/admin")
   } catch (err) {
     return NextResponse.json({ success: false, error: "Internal Server Error" }, { status: 500 })
   }
