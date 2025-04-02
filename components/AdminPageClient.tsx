@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { createClient } from "@/utils/supabase/client"
-import Link from "next/link"
 
 export default function AdminPageClient({ profiles }: { profiles: any[] }) {
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -48,6 +47,25 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
     setEditingId(null)
     setLoading(false)
     alert("✅ Changes saved successfully!")
+  }
+
+  const handleDelete = async (id: string) => {
+    const confirmDelete = confirm("⚠️ Are you sure you want to delete this profile?")
+    if (!confirmDelete) return
+
+    setLoading(true)
+    const { error } = await supabase.from("profiles").delete().eq("id", id)
+
+    if (error) {
+      alert("❌ Error deleting profile: " + error.message)
+      setLoading(false)
+      return
+    }
+
+    const filteredProfiles = allProfiles.filter((p) => p.id !== id)
+    setAllProfiles(filteredProfiles)
+    setLoading(false)
+    alert("✅ Profile deleted successfully!")
   }
 
   return (
@@ -102,16 +120,18 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
               <div className="flex gap-4 mt-2">
                 <button
                   onClick={() => handleEdit(profile)}
+                  disabled={loading}
                   className="bg-yellow-500 text-white py-1 px-3 rounded"
                 >
                   Edit
                 </button>
-                <Link
-                  href={`/profiledelete?id=${profile.id}`}
+                <button
+                  onClick={() => handleDelete(profile.id)}
+                  disabled={loading}
                   className="bg-red-600 text-white py-1 px-3 rounded"
                 >
                   Delete
-                </Link>
+                </button>
               </div>
             </>
           )}
