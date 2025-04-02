@@ -1,99 +1,105 @@
-import { redirect } from "next/navigation"
-import { createClient } from "@/utils/supabase/server"
+"use client"
+
+import { useState } from "react"
+import { createClient } from "@/utils/supabase/client"
 import Link from "next/link"
 
-export const dynamic = "force-dynamic"
+export default function AdminPageClient({ profiles }: { profiles: any[] }) {
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [formData, setFormData] = useState<any>({})
+  const supabase = createClient()
 
-export default async function AdminPage() {
-  try {
-    const supabase = await createClient()
+  const handleEdit = (profile: any) => {
+    setEditingId(profile.id)
+    setFormData({
+      first_name: profile.first_name,
+      last_name: profile.last_name,
+      role: profile.role,
+    })
+  }
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
 
-    if (!user || userError) {
-      redirect("/login")
-    }
-
-    // Obtener perfil para validar si es admin
-    const { data: profile, error: profileError } = await supabase
+  const handleSave = async (id: string) => {
+    await supabase
       .from("profiles")
-      .select("role")
-      .eq("id", user.id)
-      .single()
+      .update({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        role: formData.role,
+      })
+      .eq("id", id)
 
-    if (profileError || profile?.role !== "admin") {
-      redirect("/dashboard")
-    }
+    setEditingId(null)
+  }
 
-    // Obtener todos los perfiles
-    const { data: profiles, error: profilesError } = await supabase
-      .from("profiles")
-      .select("id, first_name, last_name, email, role")
-
-    if (profilesError) {
-      throw new Error("Unable to fetch profiles data.")
-    }
-
-    return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Admin Panel</h1>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">You are logged in as Admin</p>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">All User Profiles</h2>
-
-          {profiles.length === 0 ? (
-            <p className="text-gray-600 dark:text-gray-400">No profiles found.</p>
-          ) : (
-            <div className="space-y-4">
-              {profiles.map((profile: { id: string; first_name: string; last_name: string; email: string; role: string }) => (
-                <div key={profile.id} className="border-b pb-4">
-                  <p className="text-gray-800 dark:text-white font-medium">
-                    {profile.first_name} {profile.last_name} ({profile.email}) - Role: {profile.role}
-                  </p>
-                  <div className="flex gap-4 mt-2">
-                    <Link
-                      href={`/profileupdate?id=${profile.id}`}
-                      className="bg-yellow-500 text-white py-1 px-3 rounded hover:bg-yellow-600"
-                    >
-                      Update Profile
-                    </Link>
-                    <Link
-                      href={`/profiledelete?id=${profile.id}`}
-                      className="bg-red-600 text-white py-1 px-3 rounded hover:bg-red-700"
-                    >
-                      Delete Profile
-                    </Link>
-                  </div>
-                </div>
-              ))}
+  return (
+    <div className="space-y-4">
+      {profiles.map((profile) => (
+        <div key={profile.id} className="border-b pb-4">
+          {editingId === profile.id ? (
+            <div className="flex flex-col gap-2">
+              <input
+                name="first_name"
+                value={formData.first_name}
+                onChange={handleChange}
+                className="border px-2 py-1 rounded"
+              />
+              <input
+                name="last_name"
+                value={formData.last_name}
+                onChange={handleChange}
+                className="border px-2 py-1 rounded"
+              />
+              <select
+                name="role"
+                value={formData.role}
+                onChange={handleChange}
+                className="border px-2 py-1 rounded"
+              >
+                <option value="user">User</option>
+                <option value="admin">Admin</option>
+              </select>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleSave(profile.id)}
+                  className="bg-green-600 text-white py-1 px-3 rounded"
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => setEditingId(null)}
+                  className="bg-gray-500 text-white py-1 px-3 rounded"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
+          ) : (
+            <>
+              <p className="text-gray-800 dark:text-white font-medium">
+                {profile.first_name} {profile.last_name} ({profile.email}) - Role: {profile.role}
+              </p>
+              <div className="flex gap-4 mt-2">
+                <button
+                  onClick={() => handleEdit(profile)}
+                  className="bg-yellow-500 text-white py-1 px-3 rounded"
+                >
+                  Edit
+                </button>
+                <Link
+                  href={`/profiledelete?id=${profile.id}`}
+                  className="bg-red-600 text-white py-1 px-3 rounded"
+                >
+                  Delete
+                </Link>
+              </div>
+            </>
           )}
         </div>
-
-        <Link
-          href="/dashboard"
-          className="w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700"
-        >
-          Come back to Dashboard
-        </Link>
-      </div>
-    )
-  } catch (error) {
-    console.error("Error rendering admin page:", error)
-
-    return (
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Admin Panel</h1>
-
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-          <p className="text-gray-600 dark:text-gray-400">
-            We're experiencing some technical difficulties. Please try again later.
-          </p>
-        </div>
-      </div>
-    )
-  }
+      ))}
+    </div>
+  )
 }
-
-/* Alerta */
