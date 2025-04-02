@@ -8,6 +8,7 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState<any>({})
   const [allProfiles, setAllProfiles] = useState(profiles)
+  const [loading, setLoading] = useState(false)
   const supabase = createClient()
 
   const handleEdit = (profile: any) => {
@@ -24,6 +25,7 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
   }
 
   const handleSave = async (id: string) => {
+    setLoading(true)
     const { error } = await supabase
       .from("profiles")
       .update({
@@ -34,7 +36,8 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
       .eq("id", id)
 
     if (error) {
-      alert("Error updating profile")
+      alert("❌ Error updating profile: " + error.message)
+      setLoading(false)
       return
     }
 
@@ -43,6 +46,8 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
     )
     setAllProfiles(updatedProfiles)
     setEditingId(null)
+    setLoading(false)
+    alert("✅ Changes saved successfully!")
   }
 
   return (
@@ -75,12 +80,14 @@ export default function AdminPageClient({ profiles }: { profiles: any[] }) {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleSave(profile.id)}
+                  disabled={loading}
                   className="bg-green-600 text-white py-1 px-3 rounded"
                 >
-                  Save
+                  {loading ? "Saving..." : "Save Changes"}
                 </button>
                 <button
                   onClick={() => setEditingId(null)}
+                  disabled={loading}
                   className="bg-gray-500 text-white py-1 px-3 rounded"
                 >
                   Cancel
