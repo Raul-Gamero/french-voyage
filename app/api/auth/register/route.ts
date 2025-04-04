@@ -4,38 +4,39 @@ import { NextResponse } from "next/server"
 export async function POST(request: Request) {
   try {
     const supabase = createClient()
-    const { email, password, firstName, lastName } = await request.json()
+    const { email, password } = await request.json()
 
-    // Register the user with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Sign in the user
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
-      options: {
-        data: {
-          first_name: firstName,
-          last_name: lastName,
-        },
-      },
     })
 
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 400 })
+    if (authError || !authData.user) {
+      return NextResponse.json({ error: "Invalid credentials" }, { status: 400 })
     }
 
-    // Create a profile record in the profiles table
-    if (authData.user) {
-      const { error: profileError } = await supabase.from("profiles").insert([
+    // Check if profile exists
+    const { data: profileData, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", authData.user.id)
+      .single()
+
+    if (profileError || !profileData) {
+      // If profile doesn't exist → create it
+      const { error: insertError } = await supabase.from("profiles").insert([
         {
           id: authData.user.id,
-          first_name: firstName,
-          last_name: lastName,
-          email: email,
+          email: authData.user.email,
+          first_name: authData.user.user_metadata.first_name,
+          last_name: authData.user.user_metadata.last_name,
           role: "student",
         },
       ])
 
-      if (profileError) {
-        return NextResponse.json({ error: profileError.message }, { status: 400 })
+      if (insertError) {
+        return NextResponse.json({ error: insertError.message }, { status: 400 })
       }
     }
 
@@ -44,4 +45,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
-
