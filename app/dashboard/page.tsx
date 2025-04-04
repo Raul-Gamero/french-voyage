@@ -1,13 +1,16 @@
 import { redirect } from "next/navigation"
 import { createClient } from "@/utils/supabase/server"
-//test
+
 export const dynamic = "force-dynamic"
 
 export default async function DashboardPage() {
   try {
     const supabase = await createClient()
 
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
 
     if (!user || userError) {
       redirect("/login")
@@ -15,7 +18,7 @@ export default async function DashboardPage() {
 
     const { data: profile } = await supabase
       .from("profiles")
-      .select("first_name, last_name")
+      .select("first_name, last_name, role") // ✅ Traer el campo "role"
       .eq("id", user.id)
       .single()
 
@@ -26,6 +29,15 @@ export default async function DashboardPage() {
         </h1>
 
         <p className="text-gray-600 dark:text-gray-400 mb-6">Email: {user.email}</p>
+
+        {profile?.role === "admin" && ( // ✅ Mostrar el botón solo si es admin
+          <a
+            href="/admin"
+            className="inline-block mb-6 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+          >
+            Admin Dashboard
+          </a>
+        )}
 
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
           <p className="text-gray-600 dark:text-gray-400">
